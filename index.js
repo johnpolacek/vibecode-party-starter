@@ -20,6 +20,20 @@ function checkPnpm() {
   }
 }
 
+// Function to install pnpm globally
+async function installPnpm() {
+  console.log('\npnpm is not installed. Installing pnpm globally...');
+  try {
+    execSync('npm install -g pnpm', { stdio: 'inherit' });
+    console.log('\npnpm installed successfully! 🎉');
+    return true;
+  } catch (err) {
+    console.error('\nError installing pnpm. Please try installing it manually:');
+    console.error('  npm install -g pnpm\n');
+    return false;
+  }
+}
+
 // Function to find an available port
 function findAvailablePort(startPort = 3000) {
   try {
@@ -34,9 +48,10 @@ async function run() {
   try {
     // Check if pnpm is installed
     if (!checkPnpm()) {
-      console.error('\nError: pnpm is not installed. Please install it first:');
-      console.error('  npm install -g pnpm\n');
-      process.exit(1);
+      const installed = await installPnpm();
+      if (!installed) {
+        process.exit(1);
+      }
     }
 
     // Get the target directory from command line arguments
