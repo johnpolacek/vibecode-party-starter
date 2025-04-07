@@ -5,10 +5,12 @@ import path from 'path';
 import { execSync, spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import open from 'open';
+import inquirer from 'inquirer';
+import { dirname, join } from 'path';
 
 // Get the directory name in ES modules
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
 // Function to check if pnpm is installed
 function checkPnpm() {
@@ -44,39 +46,70 @@ function findAvailablePort(startPort = 3000) {
   }
 }
 
-async function run() {
+async function customizePackageJson(defaultName = 'my-vibecode-app') {
+  const answers = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'name',
+      message: 'What is your project name?',
+      default: defaultName
+    },
+    {
+      type: 'input',
+      name: 'description',
+      message: 'What is your project description?',
+      default: 'A Next.js SaaS app built with vibecode.party starter'
+    },
+    {
+      type: 'input',
+      name: 'author',
+      message: 'What is your name?',
+      default: ''
+    },
+    {
+      type: 'input',
+      name: 'license',
+      message: 'What license would you like to use?',
+      default: 'MIT'
+    }
+  ]);
+
+  return answers;
+}
+
+async function createProject(projectName) {
   try {
-    // Check if pnpm is installed
-    if (!checkPnpm()) {
-      const installed = await installPnpm();
-      if (!installed) {
-        process.exit(1);
-      }
-    }
+    // Create project directory
+    fs.mkdirSync(projectName);
+    process.chdir(projectName);
 
-    // Get the target directory from command line arguments
-    const targetDir = process.argv[2] || 'my-vibecode-app';
+    // Copy starter files
+    console.log('Copying starter files...');
+    fs.copySync(join(__dirname, 'starter'), '.', { overwrite: true });
 
-    // Path to your template folder
-    const templateDir = path.join(__dirname, 'starter');
+    // Get custom package.json values
+    const customValues = await customizePackageJson(projectName);
 
-    // Ensure the target directory doesn't already exist
-    if (fs.existsSync(targetDir)) {
-      console.error(`Error: Directory ${targetDir} already exists.`);
-      process.exit(1);
-    }
+    // Read the starter package.json
+    const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
-    // Copy the template to the target directory
-    fs.copySync(templateDir, targetDir);
-    
-    console.log(`\nSuccess! Created ${targetDir} with your Next.js vibecode party starter template.`);
-    console.log('\nInstalling packages with pnpm...');
-    
-    // Change to the target directory and install dependencies
-    process.chdir(targetDir);
+    // Update with custom values
+    const updatedPackageJson = {
+      ...packageJson,
+      name: customValues.name,
+      version: '0.1.0',
+      description: customValues.description,
+      author: customValues.author,
+      license: customValues.license
+    };
+
+    // Write the updated package.json
+    fs.writeFileSync('package.json', JSON.stringify(updatedPackageJson, null, 2));
+
+    // Install dependencies
+    console.log('Installing dependencies...');
     execSync('pnpm install', { stdio: 'inherit' });
-    console.log('\nPackages installed successfully! 🎉');
-    
+
     // Find an available port
     const port = findAvailablePort();
     console.log(`\nStarting the development server on port ${port}...`);
@@ -90,7 +123,7 @@ async function run() {
     // Wait a moment for the server to start
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Open the browser
+    // Open browser
     console.log('\nOpening browser...');
     await open(`http://localhost:${port}`);
     
@@ -102,6 +135,35 @@ async function run() {
     
     // Keep the script running
     await new Promise(() => {});
+
+  } catch (err) {
+    console.error('Error:', err);
+    process.exit(1);
+  }
+}
+
+async function run() {
+  try {
+    // Check if pnpm is installed
+    if (!checkPnpm()) {
+      const installed = await installPnpm();
+      if (!installed) {
+        process.exit(1);
+      }
+    }
+
+    // Get the target directory from command line arguments
+    const targetDir = process.argv[2] || 'my-vibecode-app';
+
+    // Ensure the target directory doesn't already exist
+    if (fs.existsSync(targetDir)) {
+      console.error(`Error: Directory ${targetDir} already exists.`);
+      process.exit(1);
+    }
+
+    // Create the project with customization
+    await createProject(targetDir);
+    
   } catch (err) {
     console.error('Error:', err);
     process.exit(1);
