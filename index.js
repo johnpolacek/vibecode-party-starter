@@ -58,12 +58,12 @@ async function customizePackageJson(defaultName = 'my-vibecode-app') {
       type: 'input',
       name: 'description',
       message: 'What is your project description?',
-      default: 'A Next.js SaaS app built with vibecode.party starter'
+      default: ''
     },
     {
       type: 'input',
       name: 'author',
-      message: 'What is your name?',
+      message: 'What is the author name for this project?',
       default: ''
     },
     {
@@ -125,7 +125,7 @@ async function createProject(projectName) {
     
     // Open browser
     console.log('\nOpening browser...');
-    await open(`http://localhost:${port}`);
+    await open(`http://localhost:${port}/get-started`);
     
     // Handle process termination
     process.on('SIGINT', () => {
