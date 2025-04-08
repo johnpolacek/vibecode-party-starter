@@ -46,14 +46,27 @@ function findAvailablePort(startPort = 3000) {
   }
 }
 
-async function customizePackageJson(defaultName = 'my-vibecode-app') {
-  const answers = await inquirer.prompt([
+async function customizePackageJson(defaultName = 'temp-vibecode-app') {
+  // Function to convert slug to title case
+  const slugToTitle = (slug) => {
+    return slug
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Get project name first
+  const { name } = await inquirer.prompt([
     {
       type: 'input',
       name: 'name',
-      message: 'What is your project name?',
+      message: 'What is your project directory name?',
       default: defaultName
-    },
+    }
+  ]);
+
+  // Get description and author
+  const { description, author, license } = await inquirer.prompt([
     {
       type: 'input',
       name: 'description',
@@ -70,14 +83,57 @@ async function customizePackageJson(defaultName = 'my-vibecode-app') {
       type: 'input',
       name: 'license',
       message: 'What license would you like to use?',
-      default: 'MIT'
+      default: 'None'
     }
   ]);
 
-  return answers;
+  // Get site configuration with defaults from project description
+  const answers = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'siteTitle',
+      message: 'What is your site title? (press enter to skip)',
+      default: slugToTitle(name)
+    },
+    {
+      type: 'input',
+      name: 'siteDescription',
+      message: 'What is your site description? (press enter to skip)',
+      default: description
+    },
+    {
+      type: 'input',
+      name: 'siteShortDescription',
+      message: 'What is your site short description? (press enter to skip)',
+      default: description
+    },
+    {
+      type: 'input',
+      name: 'siteUrl',
+      message: 'What is your site URL? (press enter to skip)',
+      default: ''
+    },
+    {
+      type: 'input',
+      name: 'siteOgImage',
+      message: 'What is your site OG image URL? (press enter to skip)',
+      default: ''
+    }
+  ]);
+
+  // Combine the answers
+  const finalAnswers = {
+    name,
+    description,
+    author,
+    license,
+    ...answers
+  };
+
+  return finalAnswers;
 }
 
-async function createProject(projectName) {
+async function createProject(projectName, customValues) {
   try {
     // Create project directory
     fs.mkdirSync(projectName);
@@ -87,9 +143,6 @@ async function createProject(projectName) {
     console.log('Copying starter files...');
     fs.copySync(join(__dirname, 'starter'), '.', { overwrite: true });
 
-    // Get custom package.json values
-    const customValues = await customizePackageJson(projectName);
-
     // Read the starter package.json
     const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
@@ -98,13 +151,71 @@ async function createProject(projectName) {
       ...packageJson,
       name: customValues.name,
       version: '0.1.0',
-      description: customValues.description,
-      author: customValues.author,
+      description: customValues.description || packageJson.description,
+      author: customValues.author || packageJson.author,
       license: customValues.license
     };
 
     // Write the updated package.json
     fs.writeFileSync('package.json', JSON.stringify(updatedPackageJson, null, 2));
+
+    // Update LICENSE file based on user input
+    if (customValues.license === 'MIT') {
+      const currentYear = new Date().getFullYear();
+      const licenseContent = `MIT License
+
+Copyright (c) ${currentYear} ${customValues.author || customValues.name}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.`;
+      fs.writeFileSync('LICENSE', licenseContent);
+    } else if (customValues.license !== 'None') {
+      console.log(`\nNote: You selected the "${customValues.license}" license.`);
+      console.log('Please add your own LICENSE file with the appropriate license text.');
+      console.log('You can find standard license texts at: https://choosealicense.com/licenses/');
+    }
+
+    // Create default config object
+    const defaultConfig = {
+      title: "Vibecode Party Starter",
+      description: "A modern Next.js starter with authentication, database, storage, AI, and more.",
+      shortDescription: "Next.js Starter with Clerk, Supabase, AWS, AI, and more",
+      url: "https://starter.vibecode.party",
+      shareImage: "https://starter.vibecode.party/screenshot.png"
+    };
+
+    // Update config with custom values
+    const configContent = `export const siteConfig = {
+  title: "${customValues.siteTitle || defaultConfig.title}",
+  description: "${customValues.siteDescription || defaultConfig.description}",
+  shortDescription: "${customValues.siteShortDescription || defaultConfig.shortDescription}",
+  url: "${customValues.siteUrl || defaultConfig.url}",
+  shareImage: "${customValues.siteOgImage || defaultConfig.shareImage}"
+} as const
+
+export type SiteConfig = {
+    title: string
+    description: string
+    shortDescription: string
+    url: string
+    shareImage: string
+}`;
+    fs.writeFileSync('lib/config.ts', configContent);
 
     // Install dependencies
     console.log('Installing dependencies...');
@@ -152,8 +263,14 @@ async function run() {
       }
     }
 
-    // Get the target directory from command line arguments
-    const targetDir = process.argv[2] || 'my-vibecode-app';
+    // Get the target directory from command line arguments or use a temporary name
+    const defaultDir = process.argv[2] || 'my-vibecode-app';
+
+    // Get custom package.json values first
+    const customValues = await customizePackageJson(defaultDir);
+
+    // Use the user's chosen name for the directory
+    const targetDir = customValues.name;
 
     // Ensure the target directory doesn't already exist
     if (fs.existsSync(targetDir)) {
@@ -162,7 +279,7 @@ async function run() {
     }
 
     // Create the project with customization
-    await createProject(targetDir);
+    await createProject(targetDir, customValues);
     
   } catch (err) {
     console.error('Error:', err);

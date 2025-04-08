@@ -1,6 +1,6 @@
 {
   "name": "vibecode-party-starter",
-  "version": "0.2.5",
+  "version": "0.2.8",
   "description": "A Next.js starter project for vibecoding Saas apps with auth, payments, email, and more",
   "type": "module",
   "bin": {
@@ -8,8 +8,9 @@
   },
   "scripts": {
     "go": "git add . && aicommits && git push origin main && npm publish",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "update-starter": "rm -rf starter temp-starter && mkdir starter && git clone https://github.com/johnpolacek/vibecode.party.starter.git temp-starter && mv temp-starter/* starter/ && rm -rf temp-starter"
+    "pull": "rm -rf starter temp-starter && mkdir starter && git clone https://github.com/johnpolacek/vibecode.party.starter.git temp-starter && mv temp-starter/* starter/ && rm -rf temp-starter",
+    "ship": "pnpm update-starter && pnpm go",
+    "test": "pnpm pull && cd .. && node vibecode-party-starter-npx/index.js"
   },
   "keywords": [
     "nextjs",
