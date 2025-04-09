@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import fs from 'fs-extra';
-import path from 'path';
 import { execSync, spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import open from 'open';
@@ -44,6 +43,29 @@ function findAvailablePort(startPort = 3000) {
   } catch (err) {
     return startPort;
   }
+}
+
+// Function to check if server is ready
+async function isServerReady(port) {
+  try {
+    const response = await fetch(`http://localhost:${port}/get-started`);
+    return response.ok;
+  } catch (err) {
+    return false;
+  }
+}
+
+// Function to wait for server to be ready
+async function waitForServer(port, maxAttempts = 30) {
+  console.log('\nWaiting for server to start...');
+  for (let i = 0; i < maxAttempts; i++) {
+    if (await isServerReady(port)) {
+      console.log('Server is ready!');
+      return true;
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  throw new Error('Server failed to start within the timeout period');
 }
 
 async function customizePackageJson(defaultName = 'temp-vibecode-app') {
@@ -231,8 +253,8 @@ export type SiteConfig = {
       shell: true
     });
     
-    // Wait a moment for the server to start
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Wait for server to be ready
+    await waitForServer(port);
     
     // Open browser
     console.log('\nOpening browser...');
