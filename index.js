@@ -115,8 +115,8 @@ async function customizePackageJson(defaultName = 'temp-vibecode-app') {
     },
     {
       type: 'input',
-      name: 'siteOgImage',
-      message: 'What is your site OG image URL? (press enter to skip)',
+      name: 'siteShareImage',
+      message: 'What is your site share image (OG image) URL? (press enter to skip)',
       default: ''
     }
   ]);
@@ -205,7 +205,7 @@ SOFTWARE.`;
   description: "${customValues.siteDescription || defaultConfig.description}",
   shortDescription: "${customValues.siteShortDescription || defaultConfig.shortDescription}",
   url: "${customValues.siteUrl || defaultConfig.url}",
-  shareImage: "${customValues.siteOgImage || defaultConfig.shareImage}"
+  shareImage: "${customValues.siteShareImage || defaultConfig.shareImage}"
 } as const
 
 export type SiteConfig = {
