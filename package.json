@@ -1,10 +1,10 @@
 {
   "name": "vibecode-party-starter",
-  "version": "0.2.10",
+  "version": "0.3.0",
   "description": "A Next.js starter project for vibecoding Saas apps with auth, payments, email, and more",
   "type": "module",
   "bin": {
-    "vibecode-party-starter": "./index.js"
+    "vibecode-party-starter": "index.js"
   },
   "scripts": {
     "go": "git add . && aicommits && pnpm push",
