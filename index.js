@@ -140,6 +140,18 @@ async function customizePackageJson(defaultName = 'temp-vibecode-app') {
       name: 'siteShareImage',
       message: 'What is your site share image (OG image) URL? (press enter to skip)',
       default: ''
+    },
+    {
+      type: 'input',
+      name: 'siteX',
+      message: 'What is your X (Twitter) profile URL? (press enter to skip)',
+      default: ''
+    },
+    {
+      type: 'input',
+      name: 'siteGithub',
+      message: 'What is your GitHub repository URL? (press enter to skip)',
+      default: ''
     }
   ]);
 
@@ -218,7 +230,9 @@ SOFTWARE.`;
       description: "A modern Next.js starter with authentication, database, storage, AI, and more.",
       shortDescription: "Next.js Starter with Clerk, Supabase, AWS, AI, and more",
       url: "https://starter.vibecode.party",
-      shareImage: "https://starter.vibecode.party/screenshot.png"
+      shareImage: "https://starter.vibecode.party/screenshot.png",
+      x: "",
+      github: ""
     };
 
     // Update config with custom values
@@ -227,7 +241,9 @@ SOFTWARE.`;
   description: "${customValues.siteDescription || defaultConfig.description}",
   shortDescription: "${customValues.siteShortDescription || defaultConfig.shortDescription}",
   url: "${customValues.siteUrl || defaultConfig.url}",
-  shareImage: "${customValues.siteShareImage || defaultConfig.shareImage}"
+  shareImage: "${customValues.siteShareImage || defaultConfig.shareImage}",
+  x: "${customValues.siteX || defaultConfig.x}",
+  github: "${customValues.siteGithub || defaultConfig.github}"
 } as const
 
 export type SiteConfig = {
@@ -236,6 +252,8 @@ export type SiteConfig = {
     shortDescription: string
     url: string
     shareImage: string
+    x: string
+    github: string
 }`;
     fs.writeFileSync('lib/config.ts', configContent);
 
