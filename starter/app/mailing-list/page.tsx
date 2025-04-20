@@ -4,6 +4,7 @@ import { getSubscription, unsubscribe } from "@/app/_actions/mailing-list"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { auth } from "@clerk/nextjs/server"
+import { ConfigCard } from "@/components/admin/config-card"
 
 async function handleUnsubscribe() {
   "use server"
@@ -13,6 +14,37 @@ async function handleUnsubscribe() {
 }
 
 export default async function MailingListPage() {
+  // Check if required environment variables are configured
+  const missingEnvVars = [
+    {
+      key: "NEXT_PUBLIC_SUPABASE_URL",
+      description: "Your Supabase project URL",
+      isMissing: !process.env.NEXT_PUBLIC_SUPABASE_URL,
+    },
+    {
+      key: "SUPABASE_SERVICE_ROLE_KEY",
+      description: "Your Supabase service role key",
+      isMissing: !process.env.SUPABASE_SERVICE_ROLE_KEY,
+    },
+    {
+      key: "SENDGRID_API_KEY",
+      description: "Your SendGrid API key",
+      isMissing: !process.env.SENDGRID_API_KEY,
+    },
+  ].filter(item => item.isMissing)
+
+  if (missingEnvVars.length > 0) {
+    return (
+      <div className="container max-w-2xl py-8 md:py-12">
+        <ConfigCard
+          title="Mailing List Setup Required"
+          description="The mailing list feature needs configuration before it can be used."
+          configItems={missingEnvVars}
+        />
+      </div>
+    )
+  }
+
   const result = await getSubscription()
   const subscription = result.success ? result.data : null
 
@@ -52,11 +84,7 @@ export default async function MailingListPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p>You are currently subscribed with {subscription.email}. Your preferences are:</p>
-                  <ul className="list-inside list-disc">
-                    {subscription.preferences.updates && <li>Product Updates</li>}
-                    {subscription.preferences.marketing && <li>Marketing Updates</li>}
-                  </ul>
+                  <p>You are currently subscribed with {subscription.email}.</p>
                   <form action={handleUnsubscribe}>
                     <Button variant="destructive" type="submit">
                       Unsubscribe
@@ -67,12 +95,7 @@ export default async function MailingListPage() {
             </CardContent>
           </Card>
         ) : (
-          <>
-            <p className="max-w-[700px] text-center text-muted-foreground text-balance">
-              Subscribe to our mailing list to receive updates about new features, special offers, and tips for getting the most out of our products.
-            </p>
-            <MailingListForm />
-          </>
+          <MailingListForm />
         )}
       </div>
     </div>

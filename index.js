@@ -177,6 +177,27 @@ async function createProject(projectName, customValues) {
     console.log('Copying starter files...');
     fs.copySync(join(__dirname, 'starter'), '.', { overwrite: true });
 
+    // Copy configuration files from root directory
+    console.log('Copying configuration files...');
+    const configFiles = [
+      '.gitignore',
+      '.cursor',
+      '.prettierignore',
+      '.prettierrc',
+      '.vscode'
+    ];
+
+    for (const file of configFiles) {
+      const sourcePath = join(__dirname, file);
+      if (fs.existsSync(sourcePath)) {
+        if (fs.lstatSync(sourcePath).isDirectory()) {
+          fs.copySync(sourcePath, join(process.cwd(), file), { overwrite: true });
+        } else {
+          fs.copyFileSync(sourcePath, join(process.cwd(), file));
+        }
+      }
+    }
+
     // Read the starter package.json
     const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 
