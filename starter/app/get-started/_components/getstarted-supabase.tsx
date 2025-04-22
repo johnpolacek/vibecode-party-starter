@@ -2,10 +2,33 @@ import { Card } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Heading } from "@/components/typography/heading"
 import { isSupabaseConfigured } from "@/lib/supabase"
+import { CursorPrompt } from "./cursor-prompt"
 
 export default async function GetStartedSupabase() {
   // Check for Supabase configuration
   const hasSupabaseConfig = isSupabaseConfigured(true)
+
+  const cursorPrompt = `Please help me remove Supabase database functionality from my project by:
+
+1. Deleting these files:
+   - lib/supabase.ts
+   - supabase/config.toml
+   - supabase/migrations/
+
+2. Removing these dependencies from package.json:
+   - @supabase/supabase-js
+   - @supabase/auth-helpers-nextjs
+
+3. Removing these environment variables from .env:
+   - SUPABASE_PROJECT_REF
+   - NEXT_PUBLIC_SUPABASE_URL
+   - SUPABASE_SERVICE_ROLE_KEY
+   - SUPABASE_DB_PASSWORD
+   - SUPABASE_PROD_URL
+
+4. And remove GetStartedSupabase from the get-started page
+
+After these changes, please run \`pnpm install\` to update the dependency tree.`
 
   return (
     <>
@@ -38,6 +61,10 @@ export default async function GetStartedSupabase() {
               </li>
               <li>Restart your development server after adding the environment variables</li>
             </ol>
+
+            <div className="pt-8">
+              <CursorPrompt prompt={cursorPrompt} />
+            </div>
           </Card>
         </div>
       ) : (

@@ -11,6 +11,9 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Get the project root directory (where the script is located)
+const projectRoot = join(__dirname);
+
 // Function to check if pnpm is installed
 function checkPnpm() {
   try {
@@ -68,15 +71,23 @@ async function waitForServer(port, maxAttempts = 30) {
   throw new Error('Server failed to start within the timeout period');
 }
 
-async function customizePackageJson(defaultName = 'temp-vibecode-app') {
-  // Function to convert slug to title case
-  const slugToTitle = (slug) => {
-    return slug
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
+// Function to convert slug to title case
+const slugToTitle = (slug) => {
+  return slug
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 
+// Function to slugify a string
+const slugify = (str) => {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
+async function customizePackageJson(defaultName = 'temp-vibecode-app') {
   // Get project name first
   const { name } = await inquirer.prompt([
     {
@@ -133,7 +144,7 @@ async function customizePackageJson(defaultName = 'temp-vibecode-app') {
       type: 'input',
       name: 'siteUrl',
       message: 'What is your site URL? (press enter to skip)',
-      default: ''
+      default: `${slugify(name)}.vercel.app`
     },
     {
       type: 'input',
@@ -145,12 +156,6 @@ async function customizePackageJson(defaultName = 'temp-vibecode-app') {
       type: 'input',
       name: 'siteX',
       message: 'What is your X (Twitter) profile URL? (press enter to skip)',
-      default: ''
-    },
-    {
-      type: 'input',
-      name: 'siteGithub',
-      message: 'What is your GitHub repository URL? (press enter to skip)',
       default: ''
     }
   ]);
@@ -169,15 +174,21 @@ async function customizePackageJson(defaultName = 'temp-vibecode-app') {
 
 async function createProject(projectName, customValues) {
   try {
-    // Create project directory
+    // Create project directory in the current working directory (parent)
     fs.mkdirSync(projectName);
     process.chdir(projectName);
 
-    // Copy starter files
+    // Copy starter files from the project root
     console.log('Copying starter files...');
-    fs.copySync(join(__dirname, 'starter'), '.', { overwrite: true });
+    fs.copySync(join(projectRoot, 'starter'), '.', { 
+      overwrite: true,
+      filter: (src) => {
+        // Exclude .git directory
+        return !src.includes('.git');
+      }
+    });
 
-    // Copy configuration files from root directory
+    // Copy configuration files from project root
     console.log('Copying configuration files...');
     const configFiles = [
       '.gitignore',
@@ -188,7 +199,7 @@ async function createProject(projectName, customValues) {
     ];
 
     for (const file of configFiles) {
-      const sourcePath = join(__dirname, file);
+      const sourcePath = join(projectRoot, file);
       if (fs.existsSync(sourcePath)) {
         if (fs.lstatSync(sourcePath).isDirectory()) {
           fs.copySync(sourcePath, join(process.cwd(), file), { overwrite: true });
@@ -250,10 +261,9 @@ SOFTWARE.`;
       title: "Vibecode Party Starter",
       description: "A modern Next.js starter with authentication, database, storage, AI, and more.",
       shortDescription: "Next.js Starter with Clerk, Supabase, AWS, AI, and more",
-      url: "https://starter.vibecode.party",
-      shareImage: "https://starter.vibecode.party/screenshot.png",
+      url: "",
+      shareImage: "",
       x: "",
-      github: ""
     };
 
     // Update config with custom values
@@ -264,7 +274,8 @@ SOFTWARE.`;
   url: "${customValues.siteUrl || defaultConfig.url}",
   shareImage: "${customValues.siteShareImage || defaultConfig.shareImage}",
   x: "${customValues.siteX || defaultConfig.x}",
-  github: "${customValues.siteGithub || defaultConfig.github}"
+  github: "",
+  logo: ""
 } as const
 
 export type SiteConfig = {
@@ -275,6 +286,7 @@ export type SiteConfig = {
     shareImage: string
     x: string
     github: string
+    logo: string
 }`;
     fs.writeFileSync('lib/config.ts', configContent);
 
@@ -299,6 +311,12 @@ export type SiteConfig = {
     console.log('\nOpening browser...');
     await open(`http://localhost:${port}/get-started`);
     
+    // Open new terminal in project directory
+    openNewTerminal(projectName);
+    
+    // Open project in Cursor
+    openInCursor(projectName);
+    
     // Handle process termination
     process.on('SIGINT', () => {
       devServer.kill();
@@ -311,6 +329,62 @@ export type SiteConfig = {
   } catch (err) {
     console.error('Error:', err);
     process.exit(1);
+  }
+}
+
+// Function to open new terminal in project directory
+function openNewTerminal(projectDir) {
+  console.log(`Attempting to open new terminal in: ${projectDir}`);
+  
+  // Get the absolute path to the project directory
+  // We need to go up one level from the current directory since we're already in the project directory
+  const absolutePath = join(process.cwd());
+  console.log(`Absolute path: ${absolutePath}`);
+  
+  const command = process.platform === 'win32' 
+    ? `start cmd /k "cd ${absolutePath}"`
+    : `osascript -e 'tell app "Terminal" to do script "cd ${absolutePath}"'`;
+  
+  console.log(`Running command: ${command}`);
+  try {
+    execSync(command, { stdio: 'inherit' });
+    console.log('\nOpened new terminal window in project directory');
+  } catch (err) {
+    console.error('\nError opening new terminal:', err);
+    console.log('\nCould not open new terminal window automatically');
+    console.log('Please cd into the project directory manually:');
+    console.log(`  cd ${absolutePath}`);
+  }
+}
+
+// Function to open project in Cursor
+function openInCursor(projectDir) {
+  console.log(`Attempting to open project in Cursor: ${projectDir}`);
+  
+  // Get the absolute path to the project directory
+  // We need to use the current directory since we're already in the project directory
+  const absolutePath = join(process.cwd());
+  console.log(`Absolute path: ${absolutePath}`);
+  
+  try {
+    if (process.platform === 'darwin') {
+      // macOS
+      console.log('Using macOS command to open Cursor');
+      execSync(`open -a Cursor "${absolutePath}"`, { stdio: 'inherit' });
+      console.log('Project opened in Cursor.');
+    } else {
+      // Linux/Windows
+      console.log('Using Linux/Windows command to open Cursor');
+      execSync(`cursor "${absolutePath}"`, { stdio: 'inherit' });
+      console.log('Project opened in Cursor.');
+    }
+  } catch (err) {
+    console.error('\nError opening Cursor:', err);
+    if (process.platform === 'darwin') {
+      console.log('⚠️ Could not open Cursor. Please ensure Cursor is installed in your Applications folder.');
+    } else {
+      console.log('⚠️ Cursor command not found. Please install Cursor or open the project manually.');
+    }
   }
 }
 
