@@ -1,93 +1,75 @@
-import dotenv from 'dotenv';
-import { clerkClient } from "@/lib/clerk"
-import { TEST_USER } from "./auth-helpers"
-import { supabaseAdmin } from "@/lib/supabase-admin"
+import { db } from '@/lib/firebase/admin'
+import { QueryDocumentSnapshot, DocumentData } from 'firebase-admin/firestore'
+import { clerkClient } from '@clerk/clerk-sdk-node'
+import dotenv from 'dotenv'
 
-function isClerkError(error: unknown): error is { status: number; message: string } {
-  return typeof error === 'object' && error !== null && 'status' in error;
-}
+dotenv.config()
 
-// Load environment variables from .env
-dotenv.config();
-
-// Define tables with their ID types in reverse order of dependencies
-const TABLES_TO_RESET = [
-  { name: 'mailing_list_subscriptions', idType: 'uuid' },
-  { name: 'user_visits', idType: 'uuid' }
-] as const;
+const COLLECTIONS_TO_RESET = ['mailing_list_subscriptions', 'user_visits']
 
 /**
- * Reset test data
+ * Delete all documents in a collection
  */
-export async function resetDatabase() {
+export async function deleteCollection(collectionName: string): Promise<void> {
   try {
-    // Delete all rows from each table
-    for (const table of TABLES_TO_RESET) {
-      const { error } = await supabaseAdmin
-        .from(table.name)
-        .delete()
-        .neq('id', table.idType === 'uuid' ? '00000000-0000-0000-0000-000000000000' : 0)
-      
-      if (error) {
-        console.error(`Error clearing ${table.name}:`, error)
-        throw error
-      }
+    const collectionRef = db.collection(collectionName)
+    const snapshot = await collectionRef.get()
+
+    if (snapshot.empty) {
+      console.log(`Collection ${collectionName} is empty or does not exist. Skipping...`)
+      return
     }
-  } catch (error: unknown) {
-    console.error("Error resetting database:", error)
-    throw error
+
+    const batch = db.batch()
+    snapshot.docs.forEach((doc: QueryDocumentSnapshot<DocumentData>) => {
+      batch.delete(doc.ref)
+    })
+
+    await batch.commit()
+    console.log(`Deleted ${snapshot.size} documents from ${collectionName}`)
+  } catch (error) {
+    console.warn(`Warning: Failed to delete collection ${collectionName}:`, error)
   }
 }
 
 /**
- * Insert basic seed data for testing - placeholder for future seeding logic
+ * Reset database for testing
  */
-export async function seedTestData() {
-  try {
-    // Only attempt to reset Clerk user if CLERK_SECRET_KEY is present
-    if (process.env.CLERK_SECRET_KEY) {
-      try {
-        // Check if user exists first
-        const user = await clerkClient.users.getUser(TEST_USER.userId);
-        if (user) {
-          await clerkClient.users.updateUser(TEST_USER.userId, {
-            firstName: "",
-            lastName: "",
-            unsafeMetadata: {
-              bio: "",
-            },
-          });
-        }
-      } catch (error: unknown) {
-        if (isClerkError(error) && error.status === 404) {
-        } else {
-          console.warn('Warning: Could not reset test user profile:', error instanceof Error ? error.message : String(error));
-        }
-        // Don't throw error to allow tests to continue
-      }
-    } else {
-      console.log('CLERK_SECRET_KEY not found - skipping user reset');
+export async function resetDatabase(): Promise<void> {
+  console.log('Resetting database...')
+
+  for (const collection of COLLECTIONS_TO_RESET) {
+    await deleteCollection(collection)
+  }
+
+  console.log('Database reset complete')
+}
+
+/**
+ * Verify that all collections are empty
+ */
+export async function verifyDatabaseReset(): Promise<boolean> {
+  for (const collection of COLLECTIONS_TO_RESET) {
+    const snapshot = await db.collection(collection).get()
+    if (!snapshot.empty) {
+      console.error(`Collection ${collection} is not empty`)
+      return false
     }
-    
-    // Placeholder for future test data seeding
-    console.log('Test data seeding complete');
-  } catch (error) {
-    console.error('Error seeding test data:', error);
-    // Don't throw error to allow tests to continue
   }
+  return true
 }
 
 /**
- * Verify database reset - placeholder for future verification logic
+ * Reset database for testing
  */
-export async function verifyDatabaseReset() {
-  try {
-    // Placeholder for future verification logic
-    console.log('Database reset verification successful - No tables to verify yet');
-    return true;
-  } catch (error) {
-    console.error('Error verifying database reset:', error);
-    // Return true to allow tests to continue
-    return true;
-  }
+export async function setupTestDatabase(): Promise<void> {
+  await resetDatabase()
+}
+
+/**
+ * Seed test data
+ */
+export async function seedTestData(): Promise<void> {
+  console.log('Seeding test data...')
+  console.log('Test data seeding complete')
 } 

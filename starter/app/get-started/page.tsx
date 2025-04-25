@@ -4,7 +4,7 @@ import { Heading } from "@/components/typography/heading"
 import { redirect } from "next/navigation"
 import { headers } from "next/headers"
 import GetStartedClerk from "./_components/getstarted-clerk"
-import GetStartedSupabase from "./_components/getstarted-supabase"
+import GetStartedFirebase from "./_components/getstarted-firebase"
 import GetStartedStorage from "./_components/getstarted-storage"
 import GetStartedEmail from "./_components/getstarted-email"
 import GetStartedAI from "./_components/getstarted-ai"
@@ -30,7 +30,7 @@ export default async function GetStartedPage() {
   const isDescriptionCustomized = siteConfig.description !== ("A modern Next.js starter with authentication, database, storage, AI, and more." as string)
   const additionalInstructions = `
 
-Please come up with an implementation plan that follows the project’s architecture patterns and uses existing components where possible. Do NOT make any code changes yet, just plan the implementation.
+Please come up with an implementation plan that follows the project's architecture patterns and uses existing components where possible. Do NOT make any code changes yet, just plan the implementation.
   `
 
   const examplePrompts = {
@@ -43,11 +43,11 @@ Please come up with an implementation plan that follows the project’s architec
 5. Community showcase with likes and comments
 6. Export options with watermarking
 
-Please implement this following the project’s architecture patterns and using:
+Please implement this following the project's architecture patterns and using:
 - Replicate for text-to-image models
 - OpenAI for variations and text
 - AWS S3 for storage
-- Supabase for collections and social features
+- Firebase for collections and social features
 - Clerk for user authentication`,
 
     marketplace: `Please help me create a marketplace feature with:
@@ -59,7 +59,7 @@ Please implement this following the project’s architecture patterns and using:
 5. Seller profiles and ratings
 6. Inventory tracking
 
-Please implement this following the project’s architecture patterns and existing payment integration.`,
+Please implement this following the project's architecture patterns and existing payment integration.`,
 
     community: `Please help me create a community feature with:
 
@@ -70,7 +70,7 @@ Please implement this following the project’s architecture patterns and existi
 5. Reputation system
 6. Content moderation tools
 
-Please implement this following the project’s architecture patterns and using existing auth and storage systems.`,
+Please implement this following the project's architecture patterns and using existing auth and storage systems.`,
   }
 
   const customPrompt = `I am building a new project starting from a Next.js starter template (see the project README and package.json for more info). Please help me come up with a plan for building ${siteConfig.title} - ${siteConfig.description}`
@@ -94,7 +94,7 @@ Please implement this following the project’s architecture patterns and using 
         <div>
           <GetStartedConfig />
           <GetStartedClerk />
-          <GetStartedSupabase />
+          <GetStartedFirebase />
           <GetStartedStorage />
           <GetStartedEmail />
           <GetStartedAI />
@@ -104,9 +104,9 @@ Please implement this following the project’s architecture patterns and using 
         </div>
       </section>
 
-      <section className="flex flex-col gap-8 pb-32 max-w-4xl mx-auto px-4 w-full">
+      <section className="flex flex-col gap-8 pb-16 max-w-4xl mx-auto px-4 w-full">
         <Heading variant="h2" className="text-center">
-          What’s Next?
+          What&apos;s Next?
         </Heading>
         <p className="text-center text-muted-foreground max-w-2xl mx-auto">
           Once you have your starter configured, here are some example features you can build. Click a card to copy the Cursor prompt and get started!
@@ -125,7 +125,34 @@ Please implement this following the project’s architecture patterns and using 
               <GetStartedExample title="Community Platform" prompt={examplePrompts.community + additionalInstructions} />
             </>
           )}
+          <GetStartedExample isCommand={true} title="Generate llm.txt" prompt={`pnpm generate:llm`}>
+            <p>
+              Generate llm.txt so you can provide the entire codebase to an AI agent with a large context window like{" "}
+              <a className="text-primary" href="https://gemini.google.com" target="_blank" rel="noopener noreferrer">
+                Gemini
+              </a>
+              .
+            </p>
+          </GetStartedExample>
         </div>
+      </section>
+
+      <section className="flex flex-col gap-8 pb-32 max-w-4xl mx-auto px-4 w-full">
+        <Heading variant="h2" className="text-center">
+          Ship It!
+        </Heading>
+        <p className="text-center text-muted-foreground max-w-2xl mx-auto">
+          Once you have your starter configured, we have a collection of npm scripts that can help you deploy your project with Github and Vercel (requires Github and Vercel CLI).
+        </p>
+        <GetStartedExample isCommand={true} title="Boot Project" prompt={`pnpm boot`}>
+          <p>This will install the Github and Vercel CLI, login, and link your project.</p>
+        </GetStartedExample>
+        <GetStartedExample isCommand={true} title="Ship It" prompt={`pnpm ship`}>
+          <p>Lint and build the project, run the tests then generate a commit message and push your code to Github and Vercel.</p>
+        </GetStartedExample>
+        <GetStartedExample isCommand={true} title="YOLO Deploy" prompt={`pnpm go`}>
+          <p>Skip the tests and deploy straight to production.</p>
+        </GetStartedExample>
       </section>
     </div>
   )
