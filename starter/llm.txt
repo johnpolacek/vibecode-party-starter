@@ -2874,13 +2874,9 @@ export default async function GetStartedConfig() {
                 </div>
                 <div className="text-xs text-muted-foreground truncate">{status.value || "(none provided)"}</div>
               </div>
-              {status.isDefault ? (
+              {status.isDefault && (
                 <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 shrink-0 ${status.required ? "text-yellow-600 border-yellow-600" : "text-muted-foreground border-muted"}`}>
                   {status.required ? "Needs Update" : "Default"}
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-green-600 border-green-600 shrink-0">
-                  Customized
                 </Badge>
               )}
             </div>
@@ -3178,10 +3174,13 @@ After these changes, you can start the Firebase emulator with \`pnpm db:emulator
                   Firebase Console
                 </a>
               </li>
-              <li>Enable Firestore in your project</li>
-              <li>Go to Project Settings → Service accounts to generate a new service account key</li>
+              <li>Enable Firestore in your project (for the web)</li>
               <li>
-                Create or update your <code className="px-2 py-1 bg-muted rounded">.env</code> file with the following variables:
+                Get your firebase config and update <code className="px-2 py-1 bg-muted rounded">lib/config.ts</code>
+              </li>
+              <li>
+                Go to Project Settings &gt; Service accounts then generate a new service account key and update your <code className="px-2 py-1 bg-muted rounded">.env</code> file with the following
+                variables:
                 <pre className="mt-2 p-4 bg-muted rounded-md max-w-xl overflow-x-auto">
                   <code>
                     NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id{"\n"}
@@ -4007,6 +4006,9 @@ html {
   text-wrap: pretty;
 }
 
+button {
+  cursor: pointer;
+}
 
 
 --- File: app/layout.tsx ---
@@ -7604,7 +7606,7 @@ export function HeroSection({ gettingStarted, title }: { gettingStarted?: boolea
           {!gettingStarted && (
             <>
               <Heading variant="h2" className="mb-8 text-lg md:text-xl font-medium text-balance">
-                The Next.js starter project for vibe coding SaaS apps.
+                The Next.js starter project for vibe coding full stack web apps.
               </Heading>
               <div className="pt-4 pb-8 max-w-lg mx-auto">
                 <CopyOneliner
@@ -10874,9 +10876,9 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: 'test-api-key',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   authDomain: 'vibestarter.firebaseapp.com',
-  projectId: 'vibestarter',
   storageBucket: 'vibestarter.appspot.com',
   messagingSenderId: '123456789',
   appId: '1:123456789:web:abcdef123456789',
@@ -11721,7 +11723,7 @@ export default nextConfig;
   "name": "vibecode-party-starter",
   "version": "0.4.0",
   "license": "MIT",
-  "description": "A Next.js starter project for vibecoding full stack SaaS apps with auth, backend, payments, email, and more",
+  "description": "A Next.js starter project for vibecoding full stack web apps with auth, backend, payments, email, and more",
   "keywords": [
     "nextjs",
     "template",
