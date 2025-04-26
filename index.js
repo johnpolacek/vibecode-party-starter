@@ -125,32 +125,26 @@ async function customizePackageJson(defaultName = 'temp-vibecode-app') {
     {
       type: 'input',
       name: 'siteTitle',
-      message: 'What is your site title? (press enter to skip)',
+      message: 'What is your site title?',
       default: slugToTitle(name)
     },
     {
       type: 'input',
       name: 'siteDescription',
-      message: 'What is your site description? (press enter to skip)',
+      message: 'What is your site description?',
       default: description
     },
     {
       type: 'input',
       name: 'siteShortDescription',
-      message: 'What is your site short description? (press enter to skip)',
+      message: 'What is your site short description?',
       default: description
     },
     {
       type: 'input',
       name: 'siteUrl',
-      message: 'What is your site URL? (press enter to skip)',
+      message: 'What is your site URL?',
       default: `${slugify(name)}.vercel.app`
-    },
-    {
-      type: 'input',
-      name: 'siteShareImage',
-      message: 'What is your site share image (OG image) URL? (press enter to skip)',
-      default: ''
     },
     {
       type: 'input',
@@ -293,6 +287,30 @@ export type SiteConfig = {
     // Install dependencies
     console.log('Installing dependencies...');
     execSync('pnpm install', { stdio: 'inherit' });
+
+    // Initialize Convex
+    console.log('\nInitializing Convex...');
+    try {
+      // Create a new Convex project using the new recommended command
+      execSync('npx convex dev --once --configure=new', { 
+        stdio: 'inherit',
+        env: { ...process.env, FORCE_COLOR: '1' }
+      });
+      
+      // Generate Convex types
+      console.log('\nGenerating Convex types...');
+      execSync('npx convex codegen', {
+        stdio: 'inherit',
+        env: { ...process.env, FORCE_COLOR: '1' }
+      });
+    } catch (err) {
+      console.log('\nNote: Convex initialization requires interactive input.');
+      console.log('Please run the following commands manually after the project is created:');
+      console.log('1. npx convex dev --once --configure=new');
+      console.log('2. npx convex codegen');
+      console.log('\nAfter initialization is complete, you can start the development server with:');
+      console.log('pnpm dev');
+    }
 
     // Find an available port
     const port = findAvailablePort();
