@@ -166,6 +166,18 @@ async function customizePackageJson(defaultName = 'temp-vibecode-app') {
   return finalAnswers;
 }
 
+// Function to generate README content
+function generateReadmeContent(projectName, description) {
+  return `# ${projectName}
+
+${description}
+
+---
+
+This project was generated with [Vibecode Party Starter](https://starter.vibecode.party), a modern Next.js starter with authentication, database, storage, AI, and more.
+`;
+}
+
 async function createProject(projectName, customValues) {
   try {
     // Create project directory in the current working directory (parent)
@@ -181,6 +193,10 @@ async function createProject(projectName, customValues) {
         return !src.includes('.git');
       }
     });
+
+    // Generate and write README.md
+    const readmeContent = generateReadmeContent(customValues.name, customValues.description);
+    fs.writeFileSync('README.md', readmeContent);
 
     // Copy configuration files from project root
     console.log('Copying configuration files...');
