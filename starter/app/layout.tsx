@@ -1,4 +1,5 @@
 import Link from "next/link"
+import type { Metadata } from "next"
 import { Rethink_Sans } from "next/font/google"
 import { ThemeProvider } from "@/components/layout/theme-provider"
 import { MainNav } from "@/components/nav/main-nav"
@@ -20,6 +21,29 @@ const rethinkSans = Rethink_Sans({
   subsets: ["latin"],
   variable: "--font-rethink-sans",
 })
+
+export const metadata: Metadata = {
+  title: siteConfig.title,
+  description: siteConfig.description,
+  openGraph: {
+    title: siteConfig.title,
+    description: siteConfig.description,
+    images: [
+      {
+        url: siteConfig.shareImage,
+        width: 1200,
+        height: 630,
+        alt: `${siteConfig.title} screenshot`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.title,
+    description: siteConfig.description,
+    images: [siteConfig.shareImage],
+  },
+}
 
 export default async function RootLayout({
   children,
@@ -88,10 +112,10 @@ export default async function RootLayout({
                       © {currentYear} {siteConfig.title}. All rights reserved.
                     </p>
                     <nav className="flex gap-4">
-                      <Link href="#" className="hover:underline underline-offset-4">
+                      <Link href="/terms" className="hover:underline underline-offset-4">
                         Terms
                       </Link>
-                      <Link href="#" className="hover:underline underline-offset-4">
+                      <Link href="/privacy" className="hover:underline underline-offset-4">
                         Privacy
                       </Link>
                       <Link href="#" className="hover:underline underline-offset-4">
