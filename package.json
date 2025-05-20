@@ -1,6 +1,6 @@
 {
   "name": "vibecode-party-starter",
-  "version": "0.4.10",
+  "version": "0.4.11",
   "description": "A Next.js starter project for vibecoding Saas apps with auth, payments, email, and more",
   "type": "module",
   "bin": {
